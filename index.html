@@ -1652,11 +1652,11 @@ function buildOverallStats(){
   row1.innerHTML = '';
   row2.innerHTML = '';
 
-  const doneCt = overallTasks.filter(t=>doneSet.has(t.id)).length;
-  const overdueCt = overallTasks.filter(t=>!doneSet.has(t.id) && t.date < TODAY).length;
-  const totalLeft = overallTasks.filter(t=>!doneSet.has(t.id)).length;
-  const todayTasks = overallTasks.filter(t=>t.date===TODAY);
-  const todayLeft = todayTasks.filter(t=>!doneSet.has(t.id)).length;
+  const tasks = getTasksForCal('overall-cal');
+  const doneCt   = tasks.filter(t=>doneSet.has(t.id)).length;
+  const overdueCt= tasks.filter(t=>!doneSet.has(t.id) && t.date < TODAY).length;
+  const totalLeft= tasks.filter(t=>!doneSet.has(t.id)).length;
+  const todayLeft= tasks.filter(t=>t.date===TODAY && !doneSet.has(t.id)).length;
 
   const row1Items = [
     {l:'Tasks Left Today', n:todayLeft, id:'overall-today-count', cls:'today-card'},
@@ -1679,8 +1679,8 @@ function buildOverallStats(){
   };
 
   OVERALL_TRACKS.forEach(track=>{
-    const left = overallTasks.filter(t=>t.track===track && !doneSet.has(t.id)).length;
-    const hasOverdue = overallTasks.some(t=>t.track===track && !doneSet.has(t.id) && t.date<TODAY);
+    const left = tasks.filter(t=>t.track===track && !doneSet.has(t.id)).length;
+    const hasOverdue = tasks.some(t=>t.track===track && !doneSet.has(t.id) && t.date<TODAY);
     const card = document.createElement('div');
     card.className = 'stat-card';
     const safeId = 'overall-track-'+track.replace(/\s+/g,'-').toLowerCase();
@@ -1751,11 +1751,11 @@ function buildEssayStats(){
   row1.innerHTML = '';
   row2.innerHTML = '';
 
-  const doneCt = essayTasks.filter(t=>doneSet.has(t.id)).length;
-  const overdueCt = essayTasks.filter(t=>!doneSet.has(t.id) && t.date < TODAY).length;
-  const totalLeft = essayTasks.filter(t=>!doneSet.has(t.id)).length;
-  const todayTasks = essayTasks.filter(t=>t.date===TODAY);
-  const todayLeft = todayTasks.filter(t=>!doneSet.has(t.id)).length;
+  const tasks = getTasksForCal('essay-cal');
+  const doneCt   = tasks.filter(t=>doneSet.has(t.id)).length;
+  const overdueCt= tasks.filter(t=>!doneSet.has(t.id) && t.date < TODAY).length;
+  const totalLeft= tasks.filter(t=>!doneSet.has(t.id)).length;
+  const todayLeft= tasks.filter(t=>t.date===TODAY && !doneSet.has(t.id)).length;
 
   const row1Items = [
     {l:'Tasks Left Today', n:todayLeft, id:'essay-today-count', cls:'today-card'},
@@ -1772,8 +1772,8 @@ function buildEssayStats(){
   });
 
   ESSAY_SCHOOLS.forEach(school=>{
-    const left = essayTasks.filter(t=>t.school===school && !doneSet.has(t.id)).length;
-    const hasOverdue = essayTasks.some(t=>t.school===school && !doneSet.has(t.id) && t.date<TODAY);
+    const left = tasks.filter(t=>t.school===school && !doneSet.has(t.id)).length;
+    const hasOverdue = tasks.some(t=>t.school===school && !doneSet.has(t.id) && t.date<TODAY);
     const card = document.createElement('div');
     card.className = 'stat-card';
     const safeId = 'essay-school-'+school.replace(/\s+/g,'-').toLowerCase();
@@ -1980,8 +1980,19 @@ window.addEventListener('load', ()=>{
       const task = modalOverlay._task;
       const newDate = document.getElementById('modal-date').value;
       if(!newDate) return;
-      overrides.moved[task.id] = newDate;
-      await saveOverride({ id:'mv-'+task.id, type:'move', task_id:task.id, date:newDate });
+
+      if(task._custom){
+        const idx = overrides.added.findIndex(t=>t.id===task.id);
+        if(idx>=0) overrides.added[idx].date = newDate;
+        await sbFetch(`task_overrides?id=eq.${task.id}`, {
+          method:'PATCH', prefer:'return=minimal',
+          body: JSON.stringify({date: newDate})
+        });
+        showSync('Saved ✓');
+      } else {
+        overrides.moved[task.id] = newDate;
+        await saveOverride({ id:'mv-'+task.id, type:'move', task_id:task.id, date:newDate });
+      }
       closeModal();
       reRenderCalendars();
     }
