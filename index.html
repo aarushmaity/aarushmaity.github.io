@@ -1762,8 +1762,8 @@ function buildEssayStats(){
 /* ═══════════════════════════════ SUPABASE + EDITING */
 
 /* ── CONFIGURATION — paste your values here after Supabase setup ── */
-const SUPABASE_URL = 'https://qaqlniynyfwtcvjgcimq.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhcWxuaXlueWZ3dGN2amdjaW1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNTAwNzYsImV4cCI6MjA5NTgyNjA3Nn0.E_jozDQRRZwkr76lYx1pmJW6pgD7Zb6FyYzs0ghiPiA';
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
 const SUPABASE_CONFIGURED = SUPABASE_URL !== 'YOUR_SUPABASE_URL';
 
 /* ── OVERRIDES STORE ── */
@@ -1876,6 +1876,8 @@ function hideCtxMenu(){ ctxMenu.style.display = 'none'; ctxTarget = null; }
 document.addEventListener('click', hideCtxMenu);
 document.addEventListener('keydown', e => { if(e.key==='Escape'){ hideCtxMenu(); closeModal(); } });
 
+document.addEventListener('DOMContentLoaded', ()=>{
+
 document.getElementById('ctx-move').addEventListener('click', ()=>{
   if(!ctxTarget) return;
   openMoveModal(ctxTarget.task, ctxTarget.calId);
@@ -1984,6 +1986,8 @@ document.getElementById('modal-confirm').addEventListener('click', async ()=>{
     reRenderCalendars();
   }
 });
+
+}); /* end DOMContentLoaded */
 
 /* ── RE-RENDER with overrides applied ── */
 function getTasksForCal(calId){
