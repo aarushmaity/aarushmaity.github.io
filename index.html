@@ -2377,14 +2377,10 @@ async function runSplash(){
   const quote = QUOTES[Math.floor(Math.random()*QUOTES.length)];
 
   /* PLACEHOLDER DATA */
-  const _doneTasks  = 25;
-  const _pct        = Math.round(25/totalTasks*100);
-  const _todayTasksList = [
-    {track:'Decisions', text:'Family convo: ED/REA framework — CMU vs Cornell vs Stanford'},
-    {track:'Resume',    text:'Fix Palantir Valley Forge entry on resume'},
-    {track:'Technical', text:'Create public GitHub profile with photo + bio'},
-  ];
-  const _overdueTasks = [];
+  const _doneTasks  = doneTasks;
+  const _pct        = pct;
+  const _todayTasksList = ALL_TASKS.filter(t=>t.date===TODAY&&!doneSet.has(t.id));
+  const _overdueTasks   = ALL_TASKS.filter(t=>!doneSet.has(t.id)&&t.date<TODAY);
   const overdueToShow = _overdueTasks;
   const todayTasksList = _todayTasksList;
   /* END PLACEHOLDER */
