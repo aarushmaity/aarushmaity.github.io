@@ -1009,6 +1009,7 @@
   <canvas id="splash-canvas-fade"></canvas>
   <canvas id="splash-canvas-sweep"></canvas>
   <button id="splash-skip">Skip intro</button>
+  <div style="position:absolute;bottom:2rem;left:2rem;z-index:20;font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,245,240,0.2);letter-spacing:0.06em;">v2.8</div>
   <div id="splash-stage">
   <div id="splash-content">
 
@@ -1597,9 +1598,10 @@ const OVERALL_TRACK_COLORS = {
 function buildOverallSidebar(){
   const div = document.getElementById('overall-sidebar');
   div.innerHTML = '<div class="sidebar-hdr">Tasks left by track</div>';
+  const tasks = getTasksForCal('overall-cal');
   OVERALL_TRACKS.forEach(track => {
-    const left = overallTasks.filter(t=>t.track===track&&!doneSet.has(t.id)).length;
-    const hasOverdue = overallTasks.some(t=>t.track===track&&!doneSet.has(t.id)&&t.date<TODAY);
+    const left = tasks.filter(t=>t.track===track&&!doneSet.has(t.id)).length;
+    const hasOverdue = tasks.some(t=>t.track===track&&!doneSet.has(t.id)&&t.date<TODAY);
     const safeId = 'sb-overall-'+track.replace(/\s+/g,'-').toLowerCase();
     const warn = hasOverdue ? '<span class="cat-warn">⚠</span>' : '';
     const card = document.createElement('div');
@@ -1612,9 +1614,10 @@ function buildOverallSidebar(){
 function buildEssaySidebar(){
   const div = document.getElementById('essay-sidebar');
   div.innerHTML = '<div class="sidebar-hdr">Tasks left by school</div>';
+  const tasks = getTasksForCal('essay-cal');
   ESSAY_SCHOOLS.forEach(school => {
-    const left = essayTasks.filter(t=>t.school===school&&!doneSet.has(t.id)).length;
-    const hasOverdue = essayTasks.some(t=>t.school===school&&!doneSet.has(t.id)&&t.date<TODAY);
+    const left = tasks.filter(t=>t.school===school&&!doneSet.has(t.id)).length;
+    const hasOverdue = tasks.some(t=>t.school===school&&!doneSet.has(t.id)&&t.date<TODAY);
     const safeId = 'sb-essay-'+school.replace(/\s+/g,'-').toLowerCase();
     const warn = hasOverdue ? '<span class="cat-warn">⚠</span>' : '';
     const card = document.createElement('div');
@@ -1640,7 +1643,7 @@ function buildOverallFilters(){
       document.querySelectorAll('#overall-filters .filter-btn').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
       overallFilter = t;
-      renderCalendar(OVERALL_PHASES, buildTaskMap(overallTasks), OVERALL_BLOCKED, 'track', overallFilter, 'overall-cal');
+      renderCalendar(OVERALL_PHASES, buildTaskMap(getTasksForCal('overall-cal')), OVERALL_BLOCKED, 'track', overallFilter, 'overall-cal');
     };
     div.appendChild(btn);
   });
@@ -1706,7 +1709,7 @@ function buildEssayFilters(){
       document.querySelectorAll('#essay-filters .filter-btn').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
       essayFilter = s;
-      renderCalendar(ESSAY_PHASES, buildTaskMap(essayTasks), ESSAY_BLOCKED, 'school', essayFilter, 'essay-cal');
+      renderCalendar(ESSAY_PHASES, buildTaskMap(getTasksForCal('essay-cal')), ESSAY_BLOCKED, 'school', essayFilter, 'essay-cal');
     };
     div.appendChild(btn);
   });
@@ -1875,10 +1878,7 @@ function applyOverrides(tasks){
 }
 
 function getAllTasksWithOverrides(){
-  const base = [...overallTasks, ...essayTasks];
-  const modified = applyOverrides(base);
-  const custom = overrides.added;
-  return [...modified, ...custom];
+  return [...getTasksForCal('overall-cal'), ...getTasksForCal('essay-cal')];
 }
 
 /* ── CONTEXT MENU ── */
@@ -2116,11 +2116,15 @@ renderCalendar = function(phases, taskMap, blocked, filterKey, filterVal, calId)
 async function initWithOverrides(){
   await loadOverrides();
 
-  /* rebuild ALL_TASKS to include overrides for done tracking */
   const ovT = getTasksForCal('overall-cal');
   const esT = getTasksForCal('essay-cal');
   assignIds(ovT, 'ov');
   assignIds(esT, 'es');
+
+  /* rebuild ALL_TASKS with overrides so splash + counters are accurate */
+  ALL_TASKS.length = 0;
+  ovT.forEach(t => ALL_TASKS.push(t));
+  esT.forEach(t => ALL_TASKS.push(t));
 
   buildOverallStats();
   buildOverallLegend();
@@ -2134,6 +2138,9 @@ async function initWithOverrides(){
   buildEssaySidebar();
   renderCalendar(ESSAY_PHASES, buildTaskMap(esT), ESSAY_BLOCKED, 'school', 'all', 'essay-cal');
 
+  /* update counters with correct doneSet now that everything is loaded */
+  updateOverallDoneCard();
+  updateEssayDoneCard();
   updateGlobalProgress();
   setHeaderOffset();
 }
