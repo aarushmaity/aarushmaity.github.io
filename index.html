@@ -745,7 +745,29 @@
     z-index: 1;
   }
 
-  #splash-canvas-sweep {
+  #splash-skip {
+    position: absolute;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 20;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: rgba(247,245,240,0.35);
+    background: transparent;
+    border: 0.5px solid rgba(247,245,240,0.2);
+    border-radius: 20px;
+    padding: 5px 14px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  #splash-skip:hover {
+    color: rgba(247,245,240,0.7);
+    border-color: rgba(247,245,240,0.4);
+  }
+
+
     position: absolute;
     inset: 0;
     pointer-events: none;
@@ -985,6 +1007,7 @@
   <canvas id="splash-canvas"></canvas>
   <canvas id="splash-canvas-fade"></canvas>
   <canvas id="splash-canvas-sweep"></canvas>
+  <button id="splash-skip">Skip intro</button>
   <div id="splash-stage">
   <div id="splash-content">
 
@@ -1858,52 +1881,31 @@ function getAllTasksWithOverrides(){
 }
 
 /* ── CONTEXT MENU ── */
-let ctxTarget = null; /* {task, calId} */
-
-const ctxMenu = document.getElementById('ctx-menu');
+let ctxTarget = null;
+let ctxMenu, modalOverlay;
 
 function showCtxMenu(x, y, task, calId){
+  if(!ctxMenu) ctxMenu = document.getElementById('ctx-menu');
   ctxTarget = {task, calId};
   ctxMenu.style.display = 'block';
-  /* position, keep on screen */
   const mw = 170, mh = 80;
   ctxMenu.style.left = Math.min(x, window.innerWidth - mw - 8) + 'px';
   ctxMenu.style.top  = Math.min(y, window.innerHeight - mh - 8) + 'px';
 }
 
-function hideCtxMenu(){ ctxMenu.style.display = 'none'; ctxTarget = null; }
+function hideCtxMenu(){
+  if(!ctxMenu) ctxMenu = document.getElementById('ctx-menu');
+  ctxMenu.style.display = 'none';
+  ctxTarget = null;
+}
 
-document.addEventListener('click', hideCtxMenu);
-document.addEventListener('keydown', e => { if(e.key==='Escape'){ hideCtxMenu(); closeModal(); } });
-
-document.addEventListener('DOMContentLoaded', ()=>{
-
-document.getElementById('ctx-move').addEventListener('click', ()=>{
-  if(!ctxTarget) return;
-  openMoveModal(ctxTarget.task, ctxTarget.calId);
-  hideCtxMenu();
-});
-
-document.getElementById('ctx-remove').addEventListener('click', async ()=>{
-  if(!ctxTarget) return;
-  const {task, calId} = ctxTarget;
-  hideCtxMenu();
-  if(task._custom){
-    /* remove custom task */
-    overrides.added = overrides.added.filter(t=>t.id!==task.id);
-    await deleteOverride(task.id);
-  } else {
-    /* mark base task as removed */
-    overrides.removed.add(task.id);
-    await saveOverride({ id:'rm-'+task.id, type:'remove', task_id:task.id });
-  }
-  reRenderCalendars();
-});
-
-/* ── MOVE MODAL ── */
-const modalOverlay = document.getElementById('edit-modal-overlay');
+function closeModal(){
+  if(!modalOverlay) modalOverlay = document.getElementById('edit-modal-overlay');
+  modalOverlay.classList.remove('open');
+}
 
 function openMoveModal(task, calId){
+  if(!modalOverlay) modalOverlay = document.getElementById('edit-modal-overlay');
   document.getElementById('modal-title').textContent = 'Move task';
   document.getElementById('modal-date-field').style.display = '';
   document.getElementById('modal-text-field').style.display = 'none';
@@ -1917,14 +1919,13 @@ function openMoveModal(task, calId){
 }
 
 function openAddModal(date, calId){
+  if(!modalOverlay) modalOverlay = document.getElementById('edit-modal-overlay');
   document.getElementById('modal-title').textContent = 'Add task';
   document.getElementById('modal-date-field').style.display = '';
   document.getElementById('modal-text-field').style.display = '';
   document.getElementById('modal-track-field').style.display = '';
   document.getElementById('modal-date').value = date;
   document.getElementById('modal-text').value = '';
-
-  /* populate track/school dropdown based on which tab */
   const sel = document.getElementById('modal-track');
   sel.innerHTML = '';
   const isEssay = calId === 'essay-cal';
@@ -1941,53 +1942,78 @@ function openAddModal(date, calId){
   modalOverlay._calId = calId;
 }
 
-function closeModal(){ modalOverlay.classList.remove('open'); }
+document.addEventListener('click', hideCtxMenu);
+document.addEventListener('keydown', e => { if(e.key==='Escape'){ hideCtxMenu(); closeModal(); } });
 
-document.getElementById('modal-cancel').addEventListener('click', closeModal);
-modalOverlay.addEventListener('click', e => { if(e.target===modalOverlay) closeModal(); });
+window.addEventListener('load', ()=>{
+  ctxMenu = document.getElementById('ctx-menu');
+  modalOverlay = document.getElementById('edit-modal-overlay');
 
-document.getElementById('modal-confirm').addEventListener('click', async ()=>{
-  const mode = modalOverlay._mode;
+  document.getElementById('ctx-move').addEventListener('click', ()=>{
+    if(!ctxTarget) return;
+    openMoveModal(ctxTarget.task, ctxTarget.calId);
+    hideCtxMenu();
+  });
 
-  if(mode === 'move'){
-    const task = modalOverlay._task;
-    const newDate = document.getElementById('modal-date').value;
-    if(!newDate) return;
-    overrides.moved[task.id] = newDate;
-    const rowId = 'mv-'+task.id;
-    await saveOverride({ id:rowId, type:'move', task_id:task.id, date:newDate });
-    closeModal();
+  document.getElementById('ctx-remove').addEventListener('click', async ()=>{
+    if(!ctxTarget) return;
+    const {task, calId} = ctxTarget;
+    hideCtxMenu();
+    if(task._custom){
+      overrides.added = overrides.added.filter(t=>t.id!==task.id);
+      await deleteOverride(task.id);
+    } else {
+      overrides.removed.add(task.id);
+      await saveOverride({ id:'rm-'+task.id, type:'remove', task_id:task.id });
+    }
     reRenderCalendars();
-  }
+  });
 
-  if(mode === 'add'){
-    const date  = document.getElementById('modal-date').value;
-    const text  = document.getElementById('modal-text').value.trim();
-    const track = document.getElementById('modal-track').value;
-    const calId = modalOverlay._calId;
-    if(!date || !text) return;
-    const isEssay = calId === 'essay-cal';
-    const newId = 'custom-' + Date.now();
-    const newTask = {
-      id: newId, date, text, cls: trackToCls(track),
-      track: isEssay ? null : track,
-      school: isEssay ? track : null,
-      urgent: false, milestone: false, deadline: false,
-      _custom: true, _tab: isEssay ? 'essay' : 'overall'
-    };
-    overrides.added.push(newTask);
-    await saveOverride({
-      id: newId, type:'add', date, text,
-      track: isEssay ? null : track,
-      school: isEssay ? track : null,
-      tab: isEssay ? 'essay' : 'overall'
-    });
-    closeModal();
-    reRenderCalendars();
-  }
-});
+  document.getElementById('modal-cancel').addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', e => { if(e.target===modalOverlay) closeModal(); });
 
-}); /* end DOMContentLoaded */
+  document.getElementById('modal-confirm').addEventListener('click', async ()=>{
+    const mode = modalOverlay._mode;
+
+    if(mode === 'move'){
+      const task = modalOverlay._task;
+      const newDate = document.getElementById('modal-date').value;
+      if(!newDate) return;
+      overrides.moved[task.id] = newDate;
+      await saveOverride({ id:'mv-'+task.id, type:'move', task_id:task.id, date:newDate });
+      closeModal();
+      reRenderCalendars();
+    }
+
+    if(mode === 'add'){
+      const date  = document.getElementById('modal-date').value;
+      const text  = document.getElementById('modal-text').value.trim();
+      const track = document.getElementById('modal-track').value;
+      const calId = modalOverlay._calId;
+      if(!date || !text) return;
+      const isEssay = calId === 'essay-cal';
+      const newId = 'custom-' + Date.now();
+      const newTask = {
+        id: newId, date, text, cls: trackToCls(track),
+        track: isEssay ? null : track,
+        school: isEssay ? track : null,
+        urgent: false, milestone: false, deadline: false,
+        _custom: true, _tab: isEssay ? 'essay' : 'overall'
+      };
+      overrides.added.push(newTask);
+      await saveOverride({
+        id: newId, type:'add', date, text,
+        track: isEssay ? null : track,
+        school: isEssay ? track : null,
+        tab: isEssay ? 'essay' : 'overall'
+      });
+      closeModal();
+      reRenderCalendars();
+    }
+  });
+}); /* end window load */
+
+
 
 /* ── RE-RENDER with overrides applied ── */
 function getTasksForCal(calId){
@@ -2371,19 +2397,47 @@ function sweepWaves(dur=1800, pct=0){
 
 async function runSplash(){
   document.body.style.overflow = 'hidden';
+
+  let skipped = false;
+  function endSplash(){
+    if(skipped) return;
+    skipped = true;
+    stopCanvas();
+    document.querySelectorAll('.sp-block').forEach(b=>{ b.classList.remove('active'); b.style.opacity='0'; });
+    const splash = document.getElementById('splash');
+    const header = document.getElementById('main-header');
+    const hq     = document.getElementById('header-quote');
+    splash.style.transition = 'opacity 0.4s ease';
+    splash.style.opacity = '0';
+    setTimeout(()=>{
+      splash.style.display = 'none';
+      document.body.style.overflow = '';
+      header.style.transition = 'opacity 0.4s ease';
+      header.style.opacity = '1';
+      header.style.pointerEvents = 'auto';
+      const main = document.getElementById('main-content');
+      main.style.transition = 'opacity 0.5s ease';
+      main.style.opacity = '1';
+      hq.style.opacity = '1';
+      setHeaderOffset();
+      setupSidebarObserver();
+    }, 420);
+  }
+
+  document.getElementById('splash-skip').addEventListener('click', endSplash);
+
+
   const totalTasks = ALL_TASKS.length;
   const doneTasks  = ALL_TASKS.filter(t=>doneSet.has(t.id)).length;
   const pct        = totalTasks ? Math.round(doneTasks/totalTasks*100) : 0;
   const quote = QUOTES[Math.floor(Math.random()*QUOTES.length)];
 
-  /* PLACEHOLDER DATA */
   const _doneTasks  = doneTasks;
   const _pct        = pct;
   const _todayTasksList = ALL_TASKS.filter(t=>t.date===TODAY&&!doneSet.has(t.id));
   const _overdueTasks   = ALL_TASKS.filter(t=>!doneSet.has(t.id)&&t.date<TODAY);
   const overdueToShow = _overdueTasks;
   const todayTasksList = _todayTasksList;
-  /* END PLACEHOLDER */
 
   /* ── helpers ── */
   function showBlock(id){
@@ -2635,6 +2689,8 @@ async function runSplash(){
   await wait(2800);
 
   /* ── TRANSITION OUT ── */
+  if(skipped) return; /* skip button already handled it */
+
   const mainC  = document.getElementById('splash-canvas');
   const fadeC  = document.getElementById('splash-canvas-fade');
   const splash = document.getElementById('splash');
@@ -2643,6 +2699,7 @@ async function runSplash(){
   hq.textContent = '\u201c' + quote + '\u201d';
 
   stopCanvas();
+  skipped = true; /* prevent double-fire */
   await Promise.all([
     hideBlock(spQuoteBlock, 500),
     new Promise(r=>{ mainC.style.transition='opacity 0.5s ease'; mainC.style.opacity='0'; fadeC.style.transition='opacity 0.5s ease'; fadeC.style.opacity='0'; setTimeout(r,500); })
