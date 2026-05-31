@@ -1009,7 +1009,7 @@
   <canvas id="splash-canvas-fade"></canvas>
   <canvas id="splash-canvas-sweep"></canvas>
   <button id="splash-skip">Skip intro</button>
-  <div style="position:absolute;bottom:2rem;left:2rem;z-index:20;font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,245,240,0.2);letter-spacing:0.06em;">v2.8</div>
+  <div style="position:absolute;bottom:2rem;left:2rem;z-index:20;font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,245,240,0.2);letter-spacing:0.06em;">v2.9</div>
   <div id="splash-stage">
   <div id="splash-content">
 
@@ -1525,7 +1525,8 @@ function renderCalendar(phases, taskMap, blocked, filterKey, filterVal, calId){
       const tc = document.createElement('div');
       tc.className = 'tasks-col';
 
-      if(blk){
+      if(blk && !dayTasks.length){
+        /* blocked day with no tasks — just show the banner */
         const b = document.createElement('span');
         b.className = 'blocked-banner';
         b.textContent = '⊘ ' + blk;
@@ -1536,6 +1537,13 @@ function renderCalendar(phases, taskMap, blocked, filterKey, filterVal, calId){
         b.textContent = isWknd ? 'Weekend — rest / buffer' : 'Buffer day — catch up if behind';
         tc.appendChild(b);
       } else {
+        /* has tasks — if also blocked show banner first, then show chips */
+        if(blk){
+          const b = document.createElement('span');
+          b.className = 'blocked-banner';
+          b.textContent = '⊘ ' + blk;
+          tc.appendChild(b);
+        }
         dayTasks.forEach(t => {
           const isDone = doneSet.has(t.id);
           const isOverdue = isPast && !isDone;
