@@ -1437,15 +1437,14 @@ function updateGlobalProgress(){
   const pct = total ? Math.round(done/total*100) : 0;
   document.getElementById('global-bar').style.width = pct+'%';
   document.getElementById('global-label').textContent = done+' of '+total+' tasks done ('+pct+'%)';
-  animateNum('overall-done-count', overallTasks.filter(t=>doneSet.has(t.id)).length);
-  animateNum('essay-done-count', essayTasks.filter(t=>doneSet.has(t.id)).length);
 }
 
 function updateOverallDoneCard(){
-  const doneCt = overallTasks.filter(t=>doneSet.has(t.id)).length;
-  const overdueCt = overallTasks.filter(t=>!doneSet.has(t.id)&&t.date<TODAY).length;
-  const totalLeft = overallTasks.filter(t=>!doneSet.has(t.id)).length;
-  const todayLeft = overallTasks.filter(t=>t.date===TODAY&&!doneSet.has(t.id)).length;
+  const tasks = typeof getTasksForCal === 'function' ? getTasksForCal('overall-cal') : overallTasks;
+  const doneCt   = tasks.filter(t=>doneSet.has(t.id)).length;
+  const overdueCt= tasks.filter(t=>!doneSet.has(t.id)&&t.date<TODAY).length;
+  const totalLeft= tasks.filter(t=>!doneSet.has(t.id)).length;
+  const todayLeft= tasks.filter(t=>t.date===TODAY&&!doneSet.has(t.id)).length;
   animateNum('overall-done-count', doneCt);
   animateNum('overall-overdue-count', overdueCt);
   animateNum('overall-total-count', totalLeft);
@@ -1453,18 +1452,19 @@ function updateOverallDoneCard(){
   OVERALL_TRACKS.forEach(track=>{
     const safeId = 'overall-track-'+track.replace(/\s+/g,'-').toLowerCase();
     const sbId   = 'sb-overall-'+track.replace(/\s+/g,'-').toLowerCase();
-    const left = overallTasks.filter(t=>t.track===track&&!doneSet.has(t.id)).length;
-    const hasOverdue = overallTasks.some(t=>t.track===track&&!doneSet.has(t.id)&&t.date<TODAY);
+    const left = tasks.filter(t=>t.track===track&&!doneSet.has(t.id)).length;
+    const hasOverdue = tasks.some(t=>t.track===track&&!doneSet.has(t.id)&&t.date<TODAY);
     animateNum(safeId, left, hasOverdue);
     animateNum(sbId,   left, hasOverdue);
   });
 }
 
 function updateEssayDoneCard(){
-  const doneCt = essayTasks.filter(t=>doneSet.has(t.id)).length;
-  const overdueCt = essayTasks.filter(t=>!doneSet.has(t.id)&&t.date<TODAY).length;
-  const totalLeft = essayTasks.filter(t=>!doneSet.has(t.id)).length;
-  const todayLeft = essayTasks.filter(t=>t.date===TODAY&&!doneSet.has(t.id)).length;
+  const tasks = typeof getTasksForCal === 'function' ? getTasksForCal('essay-cal') : essayTasks;
+  const doneCt   = tasks.filter(t=>doneSet.has(t.id)).length;
+  const overdueCt= tasks.filter(t=>!doneSet.has(t.id)&&t.date<TODAY).length;
+  const totalLeft= tasks.filter(t=>!doneSet.has(t.id)).length;
+  const todayLeft= tasks.filter(t=>t.date===TODAY&&!doneSet.has(t.id)).length;
   animateNum('essay-done-count', doneCt);
   animateNum('essay-overdue-count', overdueCt);
   animateNum('essay-total-count', totalLeft);
@@ -1472,8 +1472,8 @@ function updateEssayDoneCard(){
   ESSAY_SCHOOLS.forEach(school=>{
     const safeId = 'essay-school-'+school.replace(/\s+/g,'-').toLowerCase();
     const sbId   = 'sb-essay-'+school.replace(/\s+/g,'-').toLowerCase();
-    const left = essayTasks.filter(t=>t.school===school&&!doneSet.has(t.id)).length;
-    const hasOverdue = essayTasks.some(t=>t.school===school&&!doneSet.has(t.id)&&t.date<TODAY);
+    const left = tasks.filter(t=>t.school===school&&!doneSet.has(t.id)).length;
+    const hasOverdue = tasks.some(t=>t.school===school&&!doneSet.has(t.id)&&t.date<TODAY);
     animateNum(safeId, left, hasOverdue);
     animateNum(sbId,   left, hasOverdue);
   });
