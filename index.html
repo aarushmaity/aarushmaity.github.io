@@ -607,6 +607,120 @@
     margin: 2rem 0;
   }
 
+  /* ── EDIT CONTEXT MENU ── */
+  #ctx-menu {
+    position: fixed;
+    z-index: 9999;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    min-width: 160px;
+    overflow: hidden;
+    display: none;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+  }
+
+  .ctx-item {
+    padding: 9px 14px;
+    cursor: pointer;
+    color: var(--text2);
+    border-bottom: 0.5px solid var(--border);
+    transition: background 0.1s;
+  }
+
+  .ctx-item:last-child { border-bottom: none; }
+  .ctx-item:hover { background: var(--surface2); color: var(--text); }
+  .ctx-item.danger { color: #A32D2D; }
+  .ctx-item.danger:hover { background: #FCEBEB; }
+
+  /* ── MODAL ── */
+  #edit-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    z-index: 9998;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #edit-modal-overlay.open { display: flex; }
+
+  #edit-modal {
+    background: var(--surface);
+    border-radius: var(--border-radius-lg);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    width: 380px;
+    max-width: 90vw;
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+  }
+
+  #edit-modal h3 {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 1rem;
+    color: var(--text);
+  }
+
+  .modal-field { margin-bottom: 12px; }
+  .modal-field label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 4px; }
+  .modal-field input, .modal-field select, .modal-field textarea {
+    width: 100%; padding: 7px 10px; border: 1px solid var(--border);
+    border-radius: var(--border-radius-md); font-family: 'DM Mono', monospace;
+    font-size: 12px; background: var(--surface); color: var(--text);
+  }
+  .modal-field textarea { min-height: 60px; resize: vertical; }
+
+  .modal-btns { display: flex; gap: 8px; justify-content: flex-end; margin-top: 1rem; }
+  .modal-btn { font-family: 'DM Mono', monospace; font-size: 12px; padding: 7px 16px; border-radius: var(--border-radius-md); cursor: pointer; border: 1px solid var(--border); background: var(--surface); color: var(--text2); transition: all 0.12s; }
+  .modal-btn:hover { background: var(--surface2); }
+  .modal-btn.primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .modal-btn.primary:hover { opacity: 0.85; }
+  .modal-btn.danger { color: #A32D2D; border-color: #F09595; }
+  .modal-btn.danger:hover { background: #FCEBEB; }
+
+  /* ── ADD TASK BUTTON ── */
+  .add-task-btn {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 0.5px dashed var(--text3);
+    background: transparent;
+    color: var(--text3);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, background 0.12s;
+    margin-left: 4px;
+  }
+
+  .day-row:hover .add-task-btn { opacity: 1; }
+  .add-task-btn:hover { background: var(--surface2); color: var(--text2); }
+
+  /* syncing indicator */
+  #sync-indicator {
+    position: fixed;
+    bottom: 16px;
+    right: 16px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    background: var(--text);
+    color: var(--bg);
+    padding: 5px 12px;
+    border-radius: 20px;
+    z-index: 500;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  #sync-indicator.show { opacity: 1; }
+
   @media (max-width: 600px) {
     header { padding: 1.25rem 1rem 1rem; }
     .main { padding: 1.25rem 1rem; }
@@ -1019,19 +1133,19 @@ const OVERALL_BLOCKED = {
 const overallTasks = [
   {date:'2026-05-30',track:'Decisions',cls:'de',text:'Family convo: ED/REA framework — CMU vs Cornell vs Stanford',urgent:true},
   {date:'2026-05-30',track:'Resume',cls:'re',text:'URGENT: Fix Palantir Valley Forge entry on resume (remove MSOE copy-paste)',urgent:true},
-  {date:'2026-05-30',track:'Recommenders',cls:'rc',text:'Identify 2 teacher recommenders: 1 junior STEM + 1 humanities'},
   {date:'2026-06-01',track:'Testing',cls:'ts',text:'Pull PSAT score — check WI National Merit cutoff (~209-211)'},
   {date:'2026-06-01',track:'Decisions',cls:'de',text:'Confirm: drop West Point from school list (keep SLE as activity)'},
-  {date:'2026-06-01',track:'Recommenders',cls:'rc',text:'Ask both teachers in person — bring resume + talking points (use word STRONG)'},
+  {date:'2026-06-02',track:'Recommenders',cls:'rc',text:'Identify 2 teacher recommenders: 1 junior STEM + 1 humanities'},
   {date:'2026-06-02',track:'Testing',cls:'ts',text:'Family convo: ACT 35 final — no re-test (99th percentile)'},
   {date:'2026-06-02',track:'Decisions',cls:'de',text:'Family convo: soccer recruiting — D3 at CMU/MIT/Cornell?'},
   {date:'2026-06-03',track:'Resume',cls:'re',text:'Hand resume + Valley Forge doc to Empowerly coach for full rewrite'},
   {date:'2026-06-03',track:'Financial Aid',cls:'fa',text:'Run Net Price Calculator: Stanford, MIT, Cornell, CMU (2024 tax data)'},
-  {date:'2026-06-03',track:'Recommenders',cls:'rc',text:'Send thank-you email to both teachers — attach resume'},
+  {date:'2026-06-11',track:'Recommenders',cls:'rc',text:'Ask both teachers in person — bring resume + talking points (use word STRONG)'},
   {date:'2026-06-11',track:'Recommenders',cls:'rc',text:'Identify school counselor; schedule late-Aug/Sep meeting'},
   {date:'2026-06-12',track:'Technical',cls:'te',text:'Create public GitHub profile with photo + bio',milestone:true},
   {date:'2026-06-12',track:'Financial Aid',cls:'fa',text:'Run NPC: Pitt, Wisconsin in-state, Minnesota, Purdue'},
   {date:'2026-06-12',track:'Decisions',cls:'de',text:'Confirm 13-school list; consider adding Alabama/ASU Barrett'},
+  {date:'2026-06-13',track:'Recommenders',cls:'rc',text:'Send thank-you email to both teachers — attach resume'},
   {date:'2026-06-13',track:'Technical',cls:'te',text:'Push JS games + AI capstone to public GitHub repos with READMEs'},
   {date:'2026-06-14',track:'Common App',cls:'ca',text:'Create Common App account — complete profile basics'},
   {date:'2026-06-14',track:'Decisions',cls:'de',text:'Final ED/REA decision locked in before summer sprint'},
@@ -1645,21 +1759,330 @@ function buildEssayStats(){
   });
 }
 
-/* ─── INIT ─── */
-buildOverallStats();
-buildOverallLegend();
-buildOverallFilters();
-buildOverallSidebar();
-renderCalendar(OVERALL_PHASES, buildTaskMap(overallTasks), OVERALL_BLOCKED, 'track', 'all', 'overall-cal');
+/* ═══════════════════════════════ SUPABASE + EDITING */
 
-buildEssayStats();
-buildEssayFilters();
-buildEssayLegend();
-buildEssaySidebar();
-renderCalendar(ESSAY_PHASES, buildTaskMap(essayTasks), ESSAY_BLOCKED, 'school', 'all', 'essay-cal');
+/* ── CONFIGURATION — paste your values here after Supabase setup ── */
+const SUPABASE_URL = 'https://qaqlniynyfwtcvjgcimq.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFhcWxuaXlueWZ3dGN2amdjaW1xIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAyNTAwNzYsImV4cCI6MjA5NTgyNjA3Nn0.E_jozDQRRZwkr76lYx1pmJW6pgD7Zb6FyYzs0ghiPiA';
+const SUPABASE_CONFIGURED = SUPABASE_URL !== 'YOUR_SUPABASE_URL';
 
-updateGlobalProgress();
-setHeaderOffset();
+/* ── OVERRIDES STORE ── */
+/* overrides: { removed: Set<taskId>, moved: {taskId: newDate}, added: [task] } */
+let overrides = { removed: new Set(), moved: {}, added: [] };
+
+async function sbFetch(path, opts={}){
+  const res = await fetch(SUPABASE_URL + '/rest/v1/' + path, {
+    headers: {
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+      'Prefer': opts.prefer || 'return=minimal',
+    },
+    ...opts
+  });
+  if(opts.method === 'GET' || !opts.method) return res.json();
+  return res;
+}
+
+async function loadOverrides(){
+  if(!SUPABASE_CONFIGURED) return;
+  try {
+    const rows = await sbFetch('task_overrides?select=*', { method:'GET' });
+    if(!Array.isArray(rows)) return;
+    rows.forEach(r => {
+      if(r.type === 'remove') overrides.removed.add(r.task_id);
+      if(r.type === 'move')   overrides.moved[r.task_id] = r.date;
+      if(r.type === 'add')    overrides.added.push({
+        id: r.id, date: r.date, track: r.track, school: r.school,
+        text: r.text, cls: trackToCls(r.track || r.school),
+        urgent: r.urgent, milestone: r.milestone, deadline: r.deadline,
+        _custom: true, _tab: r.tab
+      });
+    });
+  } catch(e){ console.warn('Supabase load failed:', e); }
+}
+
+async function saveOverride(row){
+  showSync('Saving...');
+  if(!SUPABASE_CONFIGURED){ showSync('Not configured'); return; }
+  try {
+    await sbFetch('task_overrides', {
+      method: 'POST',
+      prefer: 'return=minimal',
+      body: JSON.stringify(row)
+    });
+    showSync('Saved ✓');
+  } catch(e){ showSync('Save failed'); console.warn(e); }
+}
+
+async function deleteOverride(id){
+  showSync('Removing...');
+  if(!SUPABASE_CONFIGURED){ showSync('Not configured'); return; }
+  try {
+    await sbFetch(`task_overrides?id=eq.${id}`, { method:'DELETE' });
+    showSync('Removed ✓');
+  } catch(e){ showSync('Remove failed'); console.warn(e); }
+}
+
+function showSync(msg){
+  const el = document.getElementById('sync-indicator');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'), 2000);
+}
+
+function trackToCls(track){
+  const map = {
+    'Decisions':'de','Resume':'re','Recommenders':'rc','Technical':'te',
+    'Testing':'ts','Common App':'ca','Financial Aid':'fa','Valley Forge':'vf',
+    'School Research':'sr',
+    'Common App':'ca','Georgia Tech':'gt','UIUC':'ui','Purdue':'pu',
+    'Minnesota':'mn','Wisconsin':'wi','Michigan':'mi','Cornell':'co','MIT':'mt'
+  };
+  return map[track] || 'de';
+}
+
+/* Apply overrides to task arrays */
+function applyOverrides(tasks){
+  return tasks
+    .filter(t => !overrides.removed.has(t.id))
+    .map(t => overrides.moved[t.id] ? {...t, date: overrides.moved[t.id]} : t);
+}
+
+function getAllTasksWithOverrides(){
+  const base = [...overallTasks, ...essayTasks];
+  const modified = applyOverrides(base);
+  const custom = overrides.added;
+  return [...modified, ...custom];
+}
+
+/* ── CONTEXT MENU ── */
+let ctxTarget = null; /* {task, calId} */
+
+const ctxMenu = document.getElementById('ctx-menu');
+
+function showCtxMenu(x, y, task, calId){
+  ctxTarget = {task, calId};
+  ctxMenu.style.display = 'block';
+  /* position, keep on screen */
+  const mw = 170, mh = 80;
+  ctxMenu.style.left = Math.min(x, window.innerWidth - mw - 8) + 'px';
+  ctxMenu.style.top  = Math.min(y, window.innerHeight - mh - 8) + 'px';
+}
+
+function hideCtxMenu(){ ctxMenu.style.display = 'none'; ctxTarget = null; }
+
+document.addEventListener('click', hideCtxMenu);
+document.addEventListener('keydown', e => { if(e.key==='Escape'){ hideCtxMenu(); closeModal(); } });
+
+document.getElementById('ctx-move').addEventListener('click', ()=>{
+  if(!ctxTarget) return;
+  openMoveModal(ctxTarget.task, ctxTarget.calId);
+  hideCtxMenu();
+});
+
+document.getElementById('ctx-remove').addEventListener('click', async ()=>{
+  if(!ctxTarget) return;
+  const {task, calId} = ctxTarget;
+  hideCtxMenu();
+  if(task._custom){
+    /* remove custom task */
+    overrides.added = overrides.added.filter(t=>t.id!==task.id);
+    await deleteOverride(task.id);
+  } else {
+    /* mark base task as removed */
+    overrides.removed.add(task.id);
+    await saveOverride({ id:'rm-'+task.id, type:'remove', task_id:task.id });
+  }
+  reRenderCalendars();
+});
+
+/* ── MOVE MODAL ── */
+const modalOverlay = document.getElementById('edit-modal-overlay');
+
+function openMoveModal(task, calId){
+  document.getElementById('modal-title').textContent = 'Move task';
+  document.getElementById('modal-date-field').style.display = '';
+  document.getElementById('modal-text-field').style.display = 'none';
+  document.getElementById('modal-track-field').style.display = 'none';
+  document.getElementById('modal-date').value = task.date;
+  document.getElementById('modal-confirm').textContent = 'Move';
+  modalOverlay.classList.add('open');
+  modalOverlay._mode = 'move';
+  modalOverlay._task = task;
+  modalOverlay._calId = calId;
+}
+
+function openAddModal(date, calId){
+  document.getElementById('modal-title').textContent = 'Add task';
+  document.getElementById('modal-date-field').style.display = '';
+  document.getElementById('modal-text-field').style.display = '';
+  document.getElementById('modal-track-field').style.display = '';
+  document.getElementById('modal-date').value = date;
+  document.getElementById('modal-text').value = '';
+
+  /* populate track/school dropdown based on which tab */
+  const sel = document.getElementById('modal-track');
+  sel.innerHTML = '';
+  const isEssay = calId === 'essay-cal';
+  const opts = isEssay ? ESSAY_SCHOOLS : OVERALL_TRACKS;
+  opts.forEach(o => {
+    const opt = document.createElement('option');
+    opt.value = o; opt.textContent = o;
+    sel.appendChild(opt);
+  });
+  document.getElementById('modal-confirm').textContent = 'Add';
+  modalOverlay.classList.add('open');
+  modalOverlay._mode = 'add';
+  modalOverlay._date = date;
+  modalOverlay._calId = calId;
+}
+
+function closeModal(){ modalOverlay.classList.remove('open'); }
+
+document.getElementById('modal-cancel').addEventListener('click', closeModal);
+modalOverlay.addEventListener('click', e => { if(e.target===modalOverlay) closeModal(); });
+
+document.getElementById('modal-confirm').addEventListener('click', async ()=>{
+  const mode = modalOverlay._mode;
+
+  if(mode === 'move'){
+    const task = modalOverlay._task;
+    const newDate = document.getElementById('modal-date').value;
+    if(!newDate) return;
+    overrides.moved[task.id] = newDate;
+    const rowId = 'mv-'+task.id;
+    await saveOverride({ id:rowId, type:'move', task_id:task.id, date:newDate });
+    closeModal();
+    reRenderCalendars();
+  }
+
+  if(mode === 'add'){
+    const date  = document.getElementById('modal-date').value;
+    const text  = document.getElementById('modal-text').value.trim();
+    const track = document.getElementById('modal-track').value;
+    const calId = modalOverlay._calId;
+    if(!date || !text) return;
+    const isEssay = calId === 'essay-cal';
+    const newId = 'custom-' + Date.now();
+    const newTask = {
+      id: newId, date, text, cls: trackToCls(track),
+      track: isEssay ? null : track,
+      school: isEssay ? track : null,
+      urgent: false, milestone: false, deadline: false,
+      _custom: true, _tab: isEssay ? 'essay' : 'overall'
+    };
+    overrides.added.push(newTask);
+    await saveOverride({
+      id: newId, type:'add', date, text,
+      track: isEssay ? null : track,
+      school: isEssay ? track : null,
+      tab: isEssay ? 'essay' : 'overall'
+    });
+    closeModal();
+    reRenderCalendars();
+  }
+});
+
+/* ── RE-RENDER with overrides applied ── */
+function getTasksForCal(calId){
+  const isEssay = calId === 'essay-cal';
+  const base = isEssay ? essayTasks : overallTasks;
+  const modified = applyOverrides(base);
+  const customForTab = overrides.added.filter(t => isEssay ? t._tab==='essay' : t._tab==='overall');
+  return [...modified, ...customForTab];
+}
+
+function reRenderCalendars(){
+  const ovFilter = overallFilter;
+  const esFilter = essayFilter;
+
+  /* rebuild task maps with overrides */
+  const ovTasks = getTasksForCal('overall-cal');
+  const esTasks = getTasksForCal('essay-cal');
+
+  renderCalendar(OVERALL_PHASES, buildTaskMap(ovTasks), OVERALL_BLOCKED, 'track', ovFilter, 'overall-cal');
+  renderCalendar(ESSAY_PHASES,   buildTaskMap(esTasks),  ESSAY_BLOCKED,   'school', esFilter, 'essay-cal');
+
+  updateOverallDoneCard();
+  updateEssayDoneCard();
+  updateGlobalProgress();
+}
+
+/* ── PATCH renderCalendar to attach right-click + add button ── */
+const _origRenderCalendar = renderCalendar;
+renderCalendar = function(phases, taskMap, blocked, filterKey, filterVal, calId){
+  _origRenderCalendar(phases, taskMap, blocked, filterKey, filterVal, calId);
+
+  /* attach right-click to every chip */
+  document.querySelectorAll(`#${calId} .chip:not(.chip-buf):not(.chip-blk)`).forEach(chip => {
+    chip.addEventListener('contextmenu', e => {
+      e.preventDefault();
+      const taskId = chip.dataset.id;
+      const allT = getTasksForCal(calId);
+      const task = allT.find(t=>t.id===taskId);
+      if(task) showCtxMenu(e.clientX, e.clientY, task, calId);
+    });
+  });
+
+  /* attach add-task button to every non-blocked day row */
+  document.querySelectorAll(`#${calId} .day-row:not(.blocked-row)`).forEach(row => {
+    const tc = row.querySelector('.tasks-col');
+    const lbl = row.querySelector('.day-lbl');
+    if(!tc || !lbl) return;
+    const dateStr = lbl.querySelector('.date-str')?.textContent;
+    if(!dateStr) return;
+
+    /* parse "Jun 15" back to a full date using the row's position in the phase */
+    const parts = dateStr.trim().split(' ');
+    if(parts.length < 2) return;
+    const monthIdx = MONTHS.indexOf(parts[0]);
+    if(monthIdx < 0) return;
+    const dayNum = parseInt(parts[1]);
+    /* determine year: if month is Jun–Aug it's 2026, Sep–Oct also 2026, Nov+ could be 2026 */
+    const year = (monthIdx >= 10) ? 2026 : 2026; /* all our dates are 2026 */
+    const fullDate = ds(year, monthIdx+1, dayNum);
+
+    const btn = document.createElement('button');
+    btn.className = 'add-task-btn';
+    btn.textContent = '+ add';
+    btn.title = 'Add a task to this day';
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      openAddModal(fullDate, calId);
+    });
+    tc.appendChild(btn);
+  });
+};
+
+/* ── INIT WITH OVERRIDES ── */
+async function initWithOverrides(){
+  await loadOverrides();
+
+  /* rebuild ALL_TASKS to include overrides for done tracking */
+  const ovT = getTasksForCal('overall-cal');
+  const esT = getTasksForCal('essay-cal');
+  assignIds(ovT, 'ov');
+  assignIds(esT, 'es');
+
+  buildOverallStats();
+  buildOverallLegend();
+  buildOverallFilters();
+  buildOverallSidebar();
+  renderCalendar(OVERALL_PHASES, buildTaskMap(ovT), OVERALL_BLOCKED, 'track', 'all', 'overall-cal');
+
+  buildEssayStats();
+  buildEssayFilters();
+  buildEssayLegend();
+  buildEssaySidebar();
+  renderCalendar(ESSAY_PHASES, buildTaskMap(esT), ESSAY_BLOCKED, 'school', 'all', 'essay-cal');
+
+  updateGlobalProgress();
+  setHeaderOffset();
+}
+
+
 
 /* ═══════════════════════════════════════════ SPLASH ORCHESTRATION */
 
@@ -1949,12 +2372,18 @@ async function runSplash(){
   const pct        = totalTasks ? Math.round(doneTasks/totalTasks*100) : 0;
   const quote = QUOTES[Math.floor(Math.random()*QUOTES.length)];
 
-  const _doneTasks  = doneTasks;
-  const _pct        = pct;
-  const _todayTasksList = ALL_TASKS.filter(t=>t.date===TODAY&&!doneSet.has(t.id));
-  const _overdueTasks   = ALL_TASKS.filter(t=>!doneSet.has(t.id)&&t.date<TODAY);
-  const overdueToShow = _overdueTasks; 
+  /* PLACEHOLDER DATA */
+  const _doneTasks  = 25;
+  const _pct        = Math.round(25/totalTasks*100);
+  const _todayTasksList = [
+    {track:'Decisions', text:'Family convo: ED/REA framework — CMU vs Cornell vs Stanford'},
+    {track:'Resume',    text:'Fix Palantir Valley Forge entry on resume'},
+    {track:'Technical', text:'Create public GitHub profile with photo + bio'},
+  ];
+  const _overdueTasks = [];
+  const overdueToShow = _overdueTasks;
   const todayTasksList = _todayTasksList;
+  /* END PLACEHOLDER */
 
   /* ── helpers ── */
   function showBlock(id){
@@ -2257,7 +2686,10 @@ async function runSplash(){
 
 
 
-runSplash();
+initWithOverrides().then(()=>{
+  setupSidebarObserver();
+  runSplash();
+});
 
 document.getElementById('tab-btn-overall').addEventListener('click', () => switchTab('overall'));
 document.getElementById('tab-btn-essays').addEventListener('click',  () => switchTab('essays'));
@@ -2265,5 +2697,37 @@ document.getElementById('tab-btn-essays').addEventListener('click',  () => switc
 
 
 </script>
+<!-- ── CONTEXT MENU ── -->
+<div id="ctx-menu">
+  <div class="ctx-item" id="ctx-move">📅 Move to date...</div>
+  <div class="ctx-item danger" id="ctx-remove">✕ Remove task</div>
+</div>
+
+<!-- ── EDIT MODAL ── -->
+<div id="edit-modal-overlay">
+  <div id="edit-modal">
+    <h3 id="modal-title">Move task</h3>
+    <div class="modal-field" id="modal-date-field">
+      <label>New date</label>
+      <input type="date" id="modal-date" />
+    </div>
+    <div class="modal-field" id="modal-text-field" style="display:none">
+      <label>Task text</label>
+      <textarea id="modal-text"></textarea>
+    </div>
+    <div class="modal-field" id="modal-track-field" style="display:none">
+      <label>Track</label>
+      <select id="modal-track"></select>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn" id="modal-cancel">Cancel</button>
+      <button class="modal-btn primary" id="modal-confirm">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── SYNC INDICATOR ── -->
+<div id="sync-indicator">Saving...</div>
+
 </body>
 </html>
