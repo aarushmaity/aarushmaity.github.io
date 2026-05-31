@@ -1374,7 +1374,7 @@ function assignIds(tasks, prefix){
 }
 assignIds(overallTasks, 'ov');
 assignIds(essayTasks, 'es');
-const ALL_TASKS = [...overallTasks, ...essayTasks];
+let ALL_TASKS = [...overallTasks, ...essayTasks];
 
 /* ─── PERSISTENCE ─── */
 const STORAGE_KEY = 'aarush_planner_done_v1';
@@ -2029,12 +2029,26 @@ function reRenderCalendars(){
   const ovFilter = overallFilter;
   const esFilter = essayFilter;
 
-  /* rebuild task maps with overrides */
   const ovTasks = getTasksForCal('overall-cal');
   const esTasks = getTasksForCal('essay-cal');
 
+  /* reassign IDs for any new custom tasks */
+  assignIds(ovTasks, 'ov');
+  assignIds(esTasks, 'es');
+
+  /* rebuild ALL_TASKS so done tracking, counters, and today detection are accurate */
+  ALL_TASKS.length = 0;
+  ovTasks.forEach(t => ALL_TASKS.push(t));
+  esTasks.forEach(t => ALL_TASKS.push(t));
+
   renderCalendar(OVERALL_PHASES, buildTaskMap(ovTasks), OVERALL_BLOCKED, 'track', ovFilter, 'overall-cal');
   renderCalendar(ESSAY_PHASES,   buildTaskMap(esTasks),  ESSAY_BLOCKED,   'school', esFilter, 'essay-cal');
+
+  /* rebuild stat cards so today/overdue/total counts reflect current tasks */
+  buildOverallStats();
+  buildEssayStats();
+  buildOverallSidebar();
+  buildEssaySidebar();
 
   updateOverallDoneCard();
   updateEssayDoneCard();
