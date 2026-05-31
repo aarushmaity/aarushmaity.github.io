@@ -1953,7 +1953,8 @@ async function runSplash(){
   const _pct        = pct;
   const _todayTasksList = ALL_TASKS.filter(t=>t.date===TODAY&&!doneSet.has(t.id));
   const _overdueTasks   = ALL_TASKS.filter(t=>!doneSet.has(t.id)&&t.date<TODAY);
-  
+  const overdueToShow = _overdueTasks; 
+  const todayTasksList = _todayTasksList;
 
   /* ── helpers ── */
   function showBlock(id){
