@@ -1009,7 +1009,7 @@
   <canvas id="splash-canvas-fade"></canvas>
   <canvas id="splash-canvas-sweep"></canvas>
   <button id="splash-skip">Skip intro</button>
-  <div style="position:absolute;bottom:2rem;left:2rem;z-index:20;font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,245,240,0.2);letter-spacing:0.06em;">v2.10</div>
+  <div style="position:absolute;bottom:2rem;left:2rem;z-index:20;font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,245,240,0.2);letter-spacing:0.06em;">v2.11</div>
   <div id="splash-stage">
   <div id="splash-content">
 
@@ -1380,8 +1380,33 @@ let ALL_TASKS = [...overallTasks, ...essayTasks];
 /* ─── PERSISTENCE ─── */
 const STORAGE_KEY = 'aarush_planner_done_v1';
 function loadDone(){ try{ return new Set(JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]')); }catch(e){ return new Set(); } }
-function saveDone(set){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify([...set])); }catch(e){} }
+function saveDoneLocal(set){ try{ localStorage.setItem(STORAGE_KEY, JSON.stringify([...set])); }catch(e){} }
 let doneSet = loadDone();
+
+async function saveDone(set){
+  saveDoneLocal(set);
+  if(!SUPABASE_CONFIGURED) return;
+  /* save full done set as a single upsert row */
+  try {
+    await sbFetch('task_overrides', {
+      method: 'POST',
+      prefer: 'resolution=merge-duplicates,return=minimal',
+      body: JSON.stringify({ id: 'done_state', type: 'done_state', text: JSON.stringify([...set]) })
+    });
+  } catch(e){ console.warn('Done sync failed:', e); }
+}
+
+async function loadDoneFromSupabase(){
+  if(!SUPABASE_CONFIGURED) return;
+  try {
+    const rows = await sbFetch("task_overrides?id=eq.done_state&select=text", { method:'GET' });
+    if(Array.isArray(rows) && rows.length && rows[0].text){
+      const ids = JSON.parse(rows[0].text);
+      doneSet = new Set(ids);
+      saveDoneLocal(doneSet); /* update local cache */
+    }
+  } catch(e){ console.warn('Done load failed:', e); }
+}
 
 /* ─── NUMBER ANIMATION ─── */
 function animateNum(id, newVal, warn){
@@ -1564,10 +1589,10 @@ function renderCalendar(phases, taskMap, blocked, filterKey, filterVal, calId){
           else if(isOverdue) chip.textContent = label + t.text;
           else chip.textContent = (t.deadline||t.urgent ? '⚑ ' : '') + label + t.text;
 
-          chip.addEventListener('click', ()=>{
+          chip.addEventListener('click', async ()=>{
             if(doneSet.has(t.id)){ doneSet.delete(t.id); }
             else { doneSet.add(t.id); }
-            saveDone(doneSet);
+            await saveDone(doneSet);
             const isNowDone = doneSet.has(t.id);
             chip.title = isNowDone ? 'Click to mark as not done' : 'Click to mark as done';
             if(isNowDone){
@@ -2123,6 +2148,7 @@ renderCalendar = function(phases, taskMap, blocked, filterKey, filterVal, calId)
 /* ── INIT WITH OVERRIDES ── */
 async function initWithOverrides(){
   await loadOverrides();
+  await loadDoneFromSupabase(); /* load cross-device done state */
 
   const ovT = getTasksForCal('overall-cal');
   const esT = getTasksForCal('essay-cal');
