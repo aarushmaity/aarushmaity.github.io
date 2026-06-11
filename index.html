@@ -1311,10 +1311,10 @@
   /* focus add task input */
   .focus-add-input {
     display: none;
-    background: rgba(247,245,240,0.05);
-    border: 1px solid rgba(247,245,240,0.15);
+    background: rgba(26,23,20,0.05);
+    border: 1px solid rgba(26,23,20,0.15);
     border-radius: 8px;
-    color: #F7F5F0;
+    color: #1A1714;
     font-family: 'DM Mono', monospace;
     font-size: 12px;
     padding: 7px 12px;
@@ -1612,7 +1612,7 @@
   <canvas id="splash-canvas-fade"></canvas>
   <canvas id="splash-canvas-sweep"></canvas>
   <button id="splash-skip">Skip intro</button>
-  <div style="position:absolute;bottom:2rem;left:2rem;z-index:20;font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,245,240,0.2);letter-spacing:0.06em;">v2.14</div>
+  <div style="position:absolute;bottom:2rem;left:2rem;z-index:20;font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,245,240,0.2);letter-spacing:0.06em;">v2.15</div>
   <div id="splash-stage">
   <div id="splash-content">
 
@@ -3636,15 +3636,18 @@ window.addEventListener('load', ()=>{
   const addInput = document.getElementById('focus-add-input');
   if(addBtn && addInput){
     addBtn.addEventListener('click', ()=>{ addInput.classList.toggle('open'); if(addInput.classList.contains('open')) addInput.focus(); });
-    addInput.addEventListener('keydown', e=>{
+    addInput.addEventListener('keydown', async e=>{
       if(e.key==='Enter'){
         const text = addInput.value.trim();
         if(!text) return;
-        const newTask = { id:'focus-'+Date.now(), date:TODAY, text, track:'Decisions', school:null, cls:'de', _custom:true, _tab:'overall' };
+        const newId = 'focus-'+Date.now();
+        const newTask = { id:newId, date:TODAY, text, track:'Decisions', school:null, cls:'de', _custom:true, _tab:'overall' };
         focusTaskList.push(newTask);
-        ALL_TASKS.push(newTask);
+        overrides.added.push(newTask);
+        await saveOverride({ id:newId, type:'add', date:TODAY, text, track:'Decisions', school:null, tab:'overall' });
         addInput.value = '';
         addInput.classList.remove('open');
+        reRenderCalendars();
         renderFocusTasks();
       }
       if(e.key==='Escape'){ addInput.classList.remove('open'); }
