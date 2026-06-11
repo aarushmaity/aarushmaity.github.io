@@ -770,13 +770,50 @@
     z-index: 800;
     display: none;
     flex-direction: column;
-    background: #0F0F0F;
-    color: #F7F5F0;
+    background: #F5F3EE;
+    color: #1A1714;
     font-family: 'DM Mono', monospace;
     overflow: hidden;
+    clip-path: inset(0 100% 0 0);
   }
 
-  #focus-overlay.open { display: flex; }
+  #focus-overlay.open {
+    display: flex;
+    animation: focusSwipeIn 0.65s cubic-bezier(0.4,0,0.2,1) forwards;
+  }
+
+  @keyframes focusSwipeIn {
+    from { clip-path: inset(0 100% 0 0); }
+    to   { clip-path: inset(0 0% 0 0); }
+  }
+
+  #focus-overlay.closing {
+    animation: focusSwipeOut 0.55s cubic-bezier(0.4,0,0.2,1) forwards;
+  }
+
+  @keyframes focusSwipeOut {
+    from { clip-path: inset(0 0% 0 0); }
+    to   { clip-path: inset(0 0 0 100%); }
+  }
+
+  /* blue leading edge during swipe */
+  #focus-overlay::before {
+    content: '';
+    position: fixed;
+    top: 0; bottom: 0;
+    width: 4px;
+    background: #378ADD;
+    left: 0;
+    z-index: 1;
+    opacity: 0;
+    transition: opacity 0.1s;
+  }
+
+  #focus-overlay.open::before { opacity: 1; animation: focusEdge 0.65s ease forwards; }
+  @keyframes focusEdge {
+    0%   { left: 0%;   opacity: 1; }
+    100% { left: 100%; opacity: 0; }
+  }
 
   #focus-canvas {
     position: absolute;
@@ -813,13 +850,13 @@
     font-size: 36px;
     font-weight: 300;
     font-style: italic;
-    color: #F7F5F0;
+    color: #1A1714;
     margin-bottom: 0.5rem;
   }
 
   .preflight-sub {
     font-size: 11px;
-    color: rgba(247,245,240,0.4);
+    color: rgba(26,23,20,0.45);
     letter-spacing: 0.08em;
     text-transform: uppercase;
     margin-bottom: 1rem;
@@ -840,49 +877,63 @@
     gap: 12px;
     padding: 12px 16px;
     border-radius: 10px;
-    border: 1px solid rgba(247,245,240,0.1);
-    background: rgba(247,245,240,0.03);
+    border: 1px solid rgba(26,23,20,0.12);
+    background: rgba(26,23,20,0.03);
     cursor: pointer;
-    transition: border-color 0.2s, background 0.2s;
+    transition: border-color 0.2s, background 0.2s, max-height 0.4s ease;
     font-size: 13px;
-    color: rgba(247,245,240,0.7);
+    color: rgba(26,23,20,0.6);
+    overflow: hidden;
+    max-height: 56px;
+  }
+
+  .preflight-item.playlist-open {
+    max-height: 260px;
   }
 
   .preflight-item.checked {
-    border-color: rgba(93,202,165,0.4);
-    background: rgba(93,202,165,0.06);
-    color: #F7F5F0;
+    border-color: rgba(93,202,165,0.5);
+    background: rgba(93,202,165,0.07);
+    color: #1A1714;
   }
 
   .preflight-check {
     width: 20px; height: 20px;
     border-radius: 50%;
-    border: 1.5px solid rgba(247,245,240,0.25);
+    border: 1.5px solid rgba(26,23,20,0.2);
     flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     font-size: 11px;
     transition: all 0.2s;
+    color: transparent;
   }
 
   .preflight-item.checked .preflight-check {
     background: #5DCAA5;
     border-color: #5DCAA5;
-    color: #0F0F0F;
+    color: white;
   }
 
   /* playlist sub-items */
   .playlist-list {
-    display: none;
+    display: flex;
     flex-direction: column;
     gap: 6px;
+    padding: 0 0 0 32px;
+    width: 100%;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), padding 0.35s ease;
+  }
+
+  .preflight-item.playlist-open .playlist-list {
+    max-height: 200px;
     padding: 10px 0 2px 32px;
   }
 
-  .preflight-item.playlist-open .playlist-list { display: flex; }
-
   .playlist-item {
     font-size: 11px;
-    color: rgba(247,245,240,0.55);
+    color: rgba(26,23,20,0.5);
     padding: 5px 10px;
     border-radius: 6px;
     cursor: pointer;
@@ -893,8 +944,8 @@
     gap: 6px;
   }
 
-  .playlist-item:hover { background: rgba(247,245,240,0.07); color: #F7F5F0; }
-  .playlist-item.selected { color: #5DCAA5; }
+  .playlist-item:hover { background: rgba(26,23,20,0.06); color: #1A1714; }
+  .playlist-item.selected { color: #1D9E75; }
 
   .begin-btn {
     font-family: 'DM Mono', monospace;
@@ -934,7 +985,7 @@
 
   .focus-date {
     font-size: 11px;
-    color: rgba(247,245,240,0.35);
+    color: rgba(26,23,20,0.4);
     letter-spacing: 0.1em;
     text-transform: uppercase;
   }
@@ -942,16 +993,16 @@
   .focus-exit-btn {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
-    color: rgba(247,245,240,0.3);
+    color: rgba(26,23,20,0.35);
     background: transparent;
-    border: 0.5px solid rgba(247,245,240,0.15);
+    border: 0.5px solid rgba(26,23,20,0.15);
     border-radius: 20px;
     padding: 4px 12px;
     cursor: pointer;
     transition: all 0.2s;
   }
 
-  .focus-exit-btn:hover { color: #F09595; border-color: rgba(240,149,149,0.4); }
+  .focus-exit-btn:hover { color: #A32D2D; border-color: rgba(163,45,45,0.4); }
 
   .focus-body {
     display: grid;
@@ -966,7 +1017,7 @@
 
   .focus-tasks-label {
     font-size: 10px;
-    color: rgba(247,245,240,0.3);
+    color: rgba(26,23,20,0.35);
     letter-spacing: 0.1em;
     text-transform: uppercase;
     margin-bottom: 10px;
@@ -978,31 +1029,31 @@
     gap: 10px;
     padding: 10px 12px;
     border-radius: 8px;
-    border: 1px solid rgba(247,245,240,0.06);
+    border: 1px solid rgba(26,23,20,0.08);
     margin-bottom: 6px;
     cursor: pointer;
     transition: all 0.15s;
     font-size: 12px;
-    color: rgba(247,245,240,0.55);
+    color: rgba(26,23,20,0.55);
   }
 
-  .focus-task-item:hover { border-color: rgba(247,245,240,0.15); color: rgba(247,245,240,0.8); }
-  .focus-task-item.active-task { border-color: #378ADD; background: rgba(56,138,221,0.08); color: #F7F5F0; }
+  .focus-task-item:hover { border-color: rgba(26,23,20,0.18); color: rgba(26,23,20,0.85); }
+  .focus-task-item.active-task { border-color: #378ADD; background: rgba(56,138,221,0.07); color: #1A1714; }
   .focus-task-item.done-task { opacity: 0.35; text-decoration: line-through; pointer-events: none; }
 
   .focus-task-check {
     width: 16px; height: 16px; border-radius: 50%;
-    border: 1px solid rgba(247,245,240,0.2);
+    border: 1px solid rgba(26,23,20,0.2);
     flex-shrink: 0; margin-top: 1px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 9px; transition: all 0.2s;
+    font-size: 9px; transition: all 0.2s; color: transparent;
   }
 
-  .focus-task-item.done-task .focus-task-check { background: #5DCAA5; border-color: #5DCAA5; color: #0F0F0F; }
+  .focus-task-item.done-task .focus-task-check { background: #5DCAA5; border-color: #5DCAA5; color: white; }
 
   .focus-task-track {
     font-size: 9px;
-    color: rgba(247,245,240,0.25);
+    color: rgba(26,23,20,0.3);
     letter-spacing: 0.06em;
     text-transform: uppercase;
     display: block;
@@ -1011,7 +1062,7 @@
 
   .focus-add-task {
     font-size: 11px;
-    color: rgba(247,245,240,0.2);
+    color: rgba(26,23,20,0.25);
     background: transparent;
     border: none;
     padding: 6px 0;
@@ -1021,21 +1072,20 @@
     font-family: 'DM Mono', monospace;
   }
 
-  .focus-add-task:hover { color: rgba(247,245,240,0.5); }
+  .focus-add-task:hover { color: rgba(26,23,20,0.55); }
 
-  /* timer column */
   .focus-timer-col {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 1.5rem;
     padding-left: 2rem;
-    border-left: 1px solid rgba(247,245,240,0.08);
+    border-left: 1px solid rgba(26,23,20,0.08);
   }
 
   .timer-active-label {
     font-size: 10px;
-    color: rgba(247,245,240,0.3);
+    color: rgba(26,23,20,0.35);
     letter-spacing: 0.1em;
     text-transform: uppercase;
     text-align: center;
@@ -1046,7 +1096,7 @@
     font-size: 16px;
     font-weight: 300;
     font-style: italic;
-    color: rgba(247,245,240,0.7);
+    color: rgba(26,23,20,0.6);
     text-align: center;
     min-height: 24px;
     line-height: 1.4;
@@ -1054,55 +1104,41 @@
 
   .timer-display {
     font-family: 'Fraunces', serif;
-    font-size: 72px;
+    font-size: 40px;
     font-weight: 500;
-    color: #F7F5F0;
+    color: #1A1714;
     letter-spacing: -0.03em;
     line-height: 1;
   }
 
-  .timer-display.break-mode { color: #5DCAA5; }
+  .timer-display.break-mode { color: #1D9E75; }
 
   .timer-mode-label {
     font-size: 10px;
     letter-spacing: 0.12em;
     text-transform: uppercase;
-    color: rgba(247,245,240,0.3);
+    color: rgba(26,23,20,0.35);
   }
 
-  .timer-mode-label.break-mode { color: #5DCAA5; }
+  .timer-mode-label.break-mode { color: #1D9E75; }
 
-  .timer-ring {
-    position: relative;
-    width: 180px; height: 180px;
-    display: flex; align-items: center; justify-content: center;
-  }
-
-  .timer-ring svg {
-    position: absolute;
-    top: 0; left: 0;
-    transform: rotate(-90deg);
-  }
-
-  .timer-ring-track { fill: none; stroke: rgba(247,245,240,0.06); stroke-width: 3; }
+  .timer-ring-track { fill: none; stroke: rgba(26,23,20,0.08); stroke-width: 3; }
   .timer-ring-fill { fill: none; stroke: #378ADD; stroke-width: 3; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
-  .timer-ring-fill.break-mode { stroke: #5DCAA5; }
-
-  .timer-controls { display: flex; gap: 10px; align-items: center; }
+  .timer-ring-fill.break-mode { stroke: #1D9E75; }
 
   .timer-btn {
     font-family: 'DM Mono', monospace;
     font-size: 11px;
     padding: 7px 18px;
     border-radius: 20px;
-    border: 1px solid rgba(247,245,240,0.2);
+    border: 1px solid rgba(26,23,20,0.18);
     background: transparent;
-    color: rgba(247,245,240,0.6);
+    color: rgba(26,23,20,0.55);
     cursor: pointer;
     transition: all 0.15s;
   }
 
-  .timer-btn:hover { background: rgba(247,245,240,0.08); color: #F7F5F0; }
+  .timer-btn:hover { background: rgba(26,23,20,0.06); color: #1A1714; }
   .timer-btn.primary { background: #378ADD; border-color: #378ADD; color: #fff; }
   .timer-btn.primary:hover { background: #5BA0E8; }
 
@@ -1110,16 +1146,16 @@
     display: flex;
     gap: 12px;
     font-size: 11px;
-    color: rgba(247,245,240,0.35);
+    color: rgba(26,23,20,0.4);
     align-items: center;
   }
 
   .timer-settings input {
     width: 44px;
-    background: rgba(247,245,240,0.06);
-    border: 1px solid rgba(247,245,240,0.12);
+    background: rgba(26,23,20,0.05);
+    border: 1px solid rgba(26,23,20,0.12);
     border-radius: 6px;
-    color: #F7F5F0;
+    color: #1A1714;
     font-family: 'DM Mono', monospace;
     font-size: 12px;
     padding: 3px 6px;
@@ -1131,13 +1167,35 @@
     font-size: 13px;
     font-style: italic;
     font-weight: 300;
-    color: rgba(247,245,240,0.25);
+    color: rgba(26,23,20,0.3);
     text-align: center;
     margin-top: auto;
     padding-top: 1rem;
   }
 
-  /* ── EXIT CONFIRM MODAL ── */
+  .focus-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(26,23,20,0.08);
+    margin-bottom: 1.5rem;
+  }
+
+  .focus-add-input {
+    display: none;
+    background: rgba(26,23,20,0.05);
+    border: 1px solid rgba(26,23,20,0.15);
+    border-radius: 8px;
+    color: #1A1714;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 7px 12px;
+    width: 100%;
+    margin-top: 4px;
+  }
+
+  .focus-add-input.open { display: block; }
   #focus-exit-modal {
     position: fixed;
     inset: 0;
@@ -1554,7 +1612,7 @@
   <canvas id="splash-canvas-fade"></canvas>
   <canvas id="splash-canvas-sweep"></canvas>
   <button id="splash-skip">Skip intro</button>
-  <div style="position:absolute;bottom:2rem;left:2rem;z-index:20;font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,245,240,0.2);letter-spacing:0.06em;">v2.12</div>
+  <div style="position:absolute;bottom:2rem;left:2rem;z-index:20;font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,245,240,0.2);letter-spacing:0.06em;">v2.14</div>
   <div id="splash-stage">
   <div id="splash-content">
 
@@ -3399,7 +3457,7 @@ function startFocusParticles(){
     pts.forEach((p,i)=>pts.slice(i+1).forEach(q=>{
       const d=Math.hypot(p.x-q.x,p.y-q.y);
       if(d<100){ ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y);
-        ctx.strokeStyle='rgba(56,138,221,1)'; ctx.globalAlpha=(1-d/100)*0.05; ctx.lineWidth=0.5; ctx.stroke(); }
+        ctx.strokeStyle='rgba(56,138,221,1)'; ctx.globalAlpha=(1-d/100)*0.06; ctx.lineWidth=0.5; ctx.stroke(); }
     }));
     focusParticlesAnim=requestAnimationFrame(draw);
   }
@@ -3484,10 +3542,16 @@ function openFocus(){
   document.getElementById('preflight').style.display = 'flex';
   document.getElementById('focus-active').style.display = 'none';
   document.getElementById('focus-complete').style.display = 'none';
-  overlay.classList.add('open');
+
+  /* set display first, then trigger animation on next frame */
+  overlay.style.display = 'flex';
+  overlay.classList.remove('closing');
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{ overlay.classList.add('open'); });
+  });
+
   document.body.style.overflow = 'hidden';
 
-  /* animate main content out */
   const main = document.getElementById('main-content');
   const header = document.getElementById('main-header');
   main.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
@@ -3550,13 +3614,13 @@ function renderFocusTasks(){
       if(!doneSet.has(t.id)){
         doneSet.add(t.id);
         await saveDone(doneSet);
+        reRenderCalendars();
         updateOverallDoneCard();
         updateEssayDoneCard();
         updateGlobalProgress();
         focusTaskList = focusTaskList.filter(ft=>!doneSet.has(ft.id));
         if(focusActiveTaskId === t.id) focusActiveTaskId = null;
         renderFocusTasks();
-        /* rotate encouragement */
         document.getElementById('focus-encouragement').textContent =
           ENCOURAGEMENTS[Math.floor(Math.random()*ENCOURAGEMENTS.length)];
       }
@@ -3680,8 +3744,16 @@ function closeFocus(){
   clearInterval(timerInterval);
   timerRunning = false;
   stopFocusParticles();
-  document.getElementById('focus-overlay').classList.remove('open');
-  document.body.style.overflow = '';
+
+  const overlay = document.getElementById('focus-overlay');
+  overlay.classList.remove('open');
+  overlay.classList.add('closing');
+
+  setTimeout(()=>{
+    overlay.classList.remove('closing');
+    overlay.style.display = 'none';
+    document.body.style.overflow = '';
+  }, 560);
 
   const main = document.getElementById('main-content');
   const header = document.getElementById('main-header');
