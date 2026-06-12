@@ -1612,7 +1612,7 @@
   <canvas id="splash-canvas-fade"></canvas>
   <canvas id="splash-canvas-sweep"></canvas>
   <button id="splash-skip">Skip intro</button>
-  <div style="position:absolute;bottom:2rem;left:2rem;z-index:20;font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,245,240,0.2);letter-spacing:0.06em;">v2.16</div>
+  <div style="position:absolute;bottom:2rem;left:2rem;z-index:20;font-family:'DM Mono',monospace;font-size:10px;color:rgba(247,245,240,0.2);letter-spacing:0.06em;">v2.17</div>
   <div id="splash-stage">
   <div id="splash-content">
 
@@ -3426,46 +3426,97 @@ const ENCOURAGEMENTS = [
 ];
 
 let focusParticlesAnim = null;
+let focusWebNodes = []; /* nodes revealed as tasks complete */
 let focusTaskList = [];
 let focusActiveTaskId = null;
 let timerInterval = null;
 let timerSecondsLeft = 25 * 60;
 let timerIsBreak = false;
 let timerRunning = false;
-const CIRCUMFERENCE = 2 * Math.PI * 80; // 502.65
+const CIRCUMFERENCE = 2 * Math.PI * 80;
 
-/* ── PARTICLES BACKGROUND ── */
+/* ── FOCUS WEB BACKGROUND ── */
 function startFocusParticles(){
   const canvas = document.getElementById('focus-canvas');
   const ctx = canvas.getContext('2d');
   canvas.width = window.innerWidth;
   canvas.height = window.innerHeight;
-  const pts = Array.from({length:45},()=>({
-    x:Math.random()*canvas.width, y:Math.random()*canvas.height,
-    r:0.8+Math.random()*2, vx:(Math.random()-0.5)*0.3, vy:(Math.random()-0.5)*0.3,
-    a:0.04+Math.random()*0.1
+  focusWebNodes = [];
+
+  /* ambient floating micro-particles — subtle, whole screen */
+  const ambient = Array.from({length:30},()=>({
+    x: Math.random()*canvas.width,
+    y: Math.random()*canvas.height,
+    r: 0.6+Math.random()*1.2,
+    vx: (Math.random()-0.5)*0.2,
+    vy: (Math.random()-0.5)*0.2,
+    a: 0.03+Math.random()*0.06
   }));
+
   function draw(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    pts.forEach(p=>{
+
+    /* ambient particles */
+    ambient.forEach(p=>{
       p.x+=p.vx; p.y+=p.vy;
       if(p.x<0)p.x=canvas.width; if(p.x>canvas.width)p.x=0;
       if(p.y<0)p.y=canvas.height; if(p.y>canvas.height)p.y=0;
       ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-      ctx.fillStyle='rgba(56,138,221,1)'; ctx.globalAlpha=p.a; ctx.fill();
+      ctx.fillStyle='rgba(56,138,221,1)';
+      ctx.globalAlpha=p.a; ctx.fill();
     });
-    pts.forEach((p,i)=>pts.slice(i+1).forEach(q=>{
-      const d=Math.hypot(p.x-q.x,p.y-q.y);
-      if(d<100){ ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(q.x,q.y);
-        ctx.strokeStyle='rgba(56,138,221,1)'; ctx.globalAlpha=(1-d/100)*0.06; ctx.lineWidth=0.5; ctx.stroke(); }
-    }));
+
+    /* web nodes — right third of screen, grow in on task completion */
+    const webX0 = canvas.width * 0.68;
+    focusWebNodes.forEach(n=>{
+      n.x += n.vx; n.y += n.vy;
+      if(n.x < webX0){ n.x=webX0; n.vx*=-1; }
+      if(n.x > canvas.width-20){ n.x=canvas.width-20; n.vx*=-1; }
+      if(n.y < 20){ n.y=20; n.vy*=-1; }
+      if(n.y > canvas.height-20){ n.y=canvas.height-20; n.vy*=-1; }
+      n.age = Math.min(n.age+1, 60);
+      const alpha = (n.age/60) * 0.85;
+      ctx.beginPath(); ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(56,138,221,1)';
+      ctx.globalAlpha=alpha; ctx.fill();
+    });
+
+    /* web lines between nodes */
+    focusWebNodes.forEach((n,i)=>{
+      focusWebNodes.slice(i+1).forEach(m=>{
+        const d = Math.hypot(n.x-m.x, n.y-m.y);
+        const maxDist = 220;
+        if(d < maxDist){
+          const alpha = (1-d/maxDist) * 0.22 * Math.min(n.age,m.age)/60;
+          ctx.beginPath(); ctx.moveTo(n.x,n.y); ctx.lineTo(m.x,m.y);
+          ctx.strokeStyle='rgba(56,138,221,1)';
+          ctx.globalAlpha=alpha; ctx.lineWidth=1; ctx.stroke();
+        }
+      });
+    });
+
     focusParticlesAnim=requestAnimationFrame(draw);
   }
   draw();
 }
 
+function addFocusWebNode(){
+  const canvas = document.getElementById('focus-canvas');
+  if(!canvas) return;
+  const webX0 = canvas.width * 0.68;
+  focusWebNodes.push({
+    x: webX0 + Math.random()*(canvas.width*0.28),
+    y: canvas.height*0.1 + Math.random()*canvas.height*0.8,
+    r: 3+Math.random()*4,
+    vx: (Math.random()-0.5)*0.4,
+    vy: (Math.random()-0.5)*0.4,
+    age: 0
+  });
+}
+
 function stopFocusParticles(){
   if(focusParticlesAnim){ cancelAnimationFrame(focusParticlesAnim); focusParticlesAnim=null; }
+  focusWebNodes = [];
 }
 
 /* ── GLOW + TRIGGER on today row ── */
@@ -3614,6 +3665,7 @@ function renderFocusTasks(){
       if(!doneSet.has(t.id)){
         doneSet.add(t.id);
         await saveDone(doneSet);
+        addFocusWebNode(); /* grow the web */
         reRenderCalendars();
         updateOverallDoneCard();
         updateEssayDoneCard();
