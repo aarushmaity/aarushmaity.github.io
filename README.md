@@ -1,7 +1,7 @@
 <div align="center">
 
 <div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0066cc,100:00aaff&height=120&section=header&text=Aarush%20Maity&fontSize=40&fontColor=ffffff&fontAlignY=35" />
+  <img src="https://capsule-render.vercel.app/api?type=waving&color=0:6a0dad,100:b44fe8&height=120&section=header&text=Aarush%20Maity&fontSize=40&fontColor=ffffff&fontAlignY=35" />
 </div>
 
 **ML Engineer · Palantir Fellow · Builder**
